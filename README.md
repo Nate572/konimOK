@@ -1,1 +1,104 @@
-# konimOK
+# הסל שלנו 🛒
+
+אתר קניות משותף בעברית: רשימות בזמן אמת, קניות קודמות, שכפול סל, מחירי רשתות, השוואת סניפים וחישוב כדאיות נסיעה בכביש. הפרויקט מיועד ל־Next.js App Router, Firebase Authentication, Cloud Firestore, API מחירים ציבורי של גרסאות לעם ו־openrouteservice.
+
+## מה כלול
+
+- חשבון אחד משותף לכל בית. שני טלפונים המחוברים לאותו חשבון רואים את אותן רשימות מיד, באמצעות Firestore onSnapshot.
+- רשימות מרובות, סימון שנקנה, כמות, ארכיון, שחזור רשימה ושכפול קנייה קודמת (איפוס הסימונים).
+- חיפוש מוצרים לפי שם/ברקוד והוספה לרשימה לפי ברקוד מדויק.
+- מחיר סל לסניפים בעיר, עם הצגה גלויה של פריטים חסרים כאשר הנתון זמין.
+- בקשת מיקום בהסכמה, מסלול נסיעה בכביש באמצעות ORS, זמן נסיעה, עלות דלק הלוך ושוב, אופציה לחישוב עלות זמן.
+- קישור ברור להשוואה נוספת ב־CHP. **אין Scraper ואין API CHP משולב** — לא הוצג API ציבורי מורשה.
+- פתיחת חשבון ביתי נוסף ממסך מנהל עם אימייל וסיסמה (רק כשהשרת מוגדר ב־Firebase Admin SDK ומוגדרת כתובת ADMIN_EMAIL).
+- תצוגת טלפון/דסקטופ, עברית RTL, מצב כהה ובהיר, שמירת הגדרות מקומיות.
+
+## הקמה — סדר פעולות
+
+### 1. כלים מקומיים
+התקן Node.js 22 ומעלה ו־Git. חלץ את התיקייה, פתח VS Code והריץ:
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+ב־Windows PowerShell יש להשתמש ב־`Copy-Item .env.example .env.local` במקום `cp` אם נדרש.
+
+### 2. Firebase ללא חיוב (Spark)
+1. היכנס ל־https://console.firebase.google.com וצור Project.
+2. Project settings > Your apps > Add web app > העתק את ערכי `firebaseConfig` לארבעת המשתנים `NEXT_PUBLIC_...` ב־`.env.local`.
+3. Authentication > Sign-in method > הפעל Email/Password.
+4. Authentication > Users > Add user. צור את חשבון הבית הראשון עם האימייל והסיסמה שתשתמשו בהם בשני הטלפונים.
+5. Firestore Database > Create database. בחר מצב Production ובחר אזור. הדבק את תוכן `firestore.rules` בחלונית Rules ופרסם.
+6. לאחר הפריסה ב־Vercel: Authentication > Settings > Authorized domains > הוסף את שם הדומיין של האתר.
+
+**זהירות:** אל תגדיר Firestore במצב Test פתוח. משתמשים אינם רשאים לקרוא מסמכים מבתים אחרים לפי הכללים המצורפים.
+
+### 3. פתיחת חשבונות חדשים (אופציונלי אך כבר ממומש)
+1. Firebase Console > Project settings > Service accounts > Generate new private key; שמור את הקובץ במחשב מאובטח **ולא בריפוזיטורי**.
+2. העתק ממנו את `project_id` ל־`FIREBASE_PROJECT_ID`, את `client_email` ל־`FIREBASE_CLIENT_EMAIL` ואת `private_key` ל־`FIREBASE_PRIVATE_KEY` (כולל `-----BEGIN PRIVATE KEY-----`; משתנה Vercel יכול להכיל שורות או `\\n`).
+3. הגדר `ADMIN_EMAIL` לערך האימייל של החשבון הראשון שיצרת ב־Authentication.
+4. מסך הגדרות באתר > פתיחת חשבון בית נוסף. רק בעל האימייל המוגדר בשרת יכול להפעיל את נקודת הקצה, לאחר אימות Firebase ID Token בצד השרת. החשבונות החדשים נפרדים לפי Firebase UID.
+5. לפני מתן חשבונות לחברים, ודא שהם מחליפים סיסמה ראשונית דרך Firebase Console או הוסף תהליך Reset Password.
+
+**אין להעלות Service Account JSON, סיסמאות, `.env.local` או מפתחות ל־GitHub.** ההרשאות לניהול חשבונות אינן מבוססות על הסתרת מסך אלא על בדיקת ID Token בשרת. לייצור רב־משתמשים מומלץ להוסיף מנגנון הזמנות, rate limits, ולוג פעולות; כרגע זו מערכת אישית קטנה.
+
+### 4. מחירים
+מקור המחירים: https://www.over.org.il/api
+
+- `GET /api/prices/products?q=...`
+- `POST /api/prices/basket` עם `{items:[{item_code,quantity}],city,top}`
+
+האפליקציה פונה ל־`/api/prices` מקומי כ־proxy כדי לא להסתמך על CORS בדפדפן. נתוני מחיר ומבצעים עשויים להשתנות, מבצעים אינם מחושבים כחלק ממחיר הסל של המקור, וחלק מהסניפים אינם מציגים כתובת או מיקום תקין. ה־API החיצוני הוא שירות של צד שלישי ואין התחייבות לזמינות או למכסה קבועה. כדי לבדוק את החיבור: לאחר התחברות, חפש מוצר לפי שם ואז השווה סל עם עיר אמיתית.
+
+### 5. נסיעות ומפות (אופציונלי)
+פתח מפתח ב־https://openrouteservice.org/ והוסף `ORS_API_KEY` ל־`.env.local` ול־Vercel. בעת השוואה, אשר מיקום ואז לחץ **חשב נסיעה בכביש**. עד שמוגדר ORS האתר עדיין משווה מחירים, אך לא מציג נסיעה כמספר מומצא.
+
+הקוד מחשב מסלולים עבור עד 8 סניפים בעלי מחיר, וינסה geocoding כשאין קואורדינטות. כשיש כתובת חלקית או שגיאה במקור, מופיעה הודעת כשל במקום מרחק. כיסוי הסניפים תלוי באיכות הכתובות ובמכסת ORS. עלות הדלק = מרחק לכיוון × 2 × ליטרים ל־100 ק״מ / 100 × מחיר לליטר. האפשרות לשווי זמן היא אופציונלית, ברירת מחדל 0.
+
+### 6. GitHub
+```bash
+git init
+git add .
+git commit -m "Shopping comparison site"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+git push -u origin main
+```
+אם הריפוזיטורי כבר משוכפל מקומית, דלג על init ו־remote. אם יש README מרוחק, בצע pull/rebase בהתאם לפני push.
+
+### 7. פריסה ב־Vercel
+1. https://vercel.com/new > Import repository.
+2. Framework: Next.js; Root directory: תיקיית הפרויקט עם `package.json`.
+3. Project Settings > Environment Variables > הגדר את 4 משתני Firebase הציבוריים; להגדרת חשבונות וניתוב גם את 4 משתני Firebase Admin וה־ORS המפורטים ב־`.env.example`.
+4. Deploy. הוסף את הדומיין ל־Firebase Authorized domains. כל עדכון ל־main יתפרס מחדש בהתאם להגדרות Vercel.
+
+GitHub Pages סטטי אינו מספיק ל־API Routes. Vercel Hobby / Firebase Spark / ORS Free כפופים למכסות ולתנאים שלהם; שימוש מסחרי עשוי לחייב מסלול בתשלום.
+
+## מה לא מובטח / מה לבדוק בהקמה
+
+**ללא Build מאומת בסביבת יצירת החבילה:** סביבת העבודה שיצרה את הפרויקט לא הצליחה להוריד תלויות npm ולכן אין בדיקת `npm run build` מוצלחת, ואין בדיקת קצה מול Firebase, ORS ומאגר המחירים עם המפתחות שלך. יש להריץ את הבדיקות אחרי התקנת התלויות ולתקן אם התגובה של המקור החיצוני השתנתה. לא נכון להתייחס לפרויקט כ־production verified לפני השלמת הבדיקות.
+
+- בדוק חיפוש מוצר, ברקודים ותוצאות סל בערים שונות מול מקור הנתונים; מבנה JSON עשוי להשתנות.
+- בדוק סניפים חסרים/מוצרים חסרים — אל תסיק ש־0 חסרים כאשר המאגר אינו מחזיר שדה.
+- בצע שינוי רשימה בשני מכשירים עם אותו חשבון, בדוק שחזור ושכפול.
+- בדוק שחשבון בית אחד אינו קורא או משנה רשימות של חשבון אחר.
+- בדוק שהקוד הפרטי והמפתחות אינם מופיעים ב־client bundle או ב־Git.
+- בדוק חיובים ומכסות ספקים; אין מנגנון חיוב/קניות בפועל, ואין הזמנות מסופר.
+- אפשר לשפר את מסך המנהל עם איפוס סיסמה, ניהול חשבונות, הגבלות קצב וחיווי שגיאות ממוקד.
+
+## מבנה
+- `app/page.jsx`: ממשק האתר
+- `app/style.css`: RTL, רספונסיביות ומצב כהה
+- `app/firebase.js`: Firebase Web SDK
+- `app/api/prices/route.js`: חיפוש וסל דרך API המחירים
+- `app/api/routes/route.js`: ORS directions + geocoding
+- `app/api/admin/users/route.js`: פתיחת חשבון חדש
+- `lib/server-admin.js`: בדיקת מנהל ו־Firebase Admin SDK
+- `firestore.rules`: הפרדת נתונים בין הבתים
+- `.env.example`: משתני סביבה
+
+### השוואת מוצר בודד
+ברשימת הקניות, אייקון החיפוש ליד כל פריט מבצע פנייה ל־`GET /api/prices/compare` על פי הברקוד. בשלב זה מוצגת תשובת JSON מלאה כדי לא להניח מבנה תשובה בלתי מאומת של המקור; השוואת סל מלא מציגה כרטיסי סניפים כאשר המבנה מזוהה.
