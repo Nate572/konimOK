@@ -17,3 +17,21 @@ html,body,button,input,select,textarea{font-family:Arial,sans-serif!important}
 
 /* Branding, mobile constraints and admin area */
 html,body{max-width:100%;overflow-x:hidden;font-family:Arial,sans-serif} .shell{width:100%;min-width:0} .shell *{min-width:0} .logo{width:54px;height:54px;background:#fff;border:1px solid #e6eef4;box-shadow:0 8px 22px #153d6a12;overflow:hidden;flex-shrink:0}.logo img{height:100%;width:100%;object-fit:contain}.heroIcon{width:94px;height:94px;background:#fff;overflow:hidden;box-shadow:0 8px 25px #08355a14}.heroIcon img{width:100%;height:100%;object-fit:contain}.brandFooter{text-align:center;color:#738399;font-size:12px;padding:18px 6px}.copyright{display:block;color:#4b6079;font-size:13px;margin-bottom:5px;font-weight:700}.footerDisclaimer{display:block}.darkTheme .logo,.darkTheme .heroIcon{background:#f8fbff}.darkTheme .copyright{color:#dce9f8}.tabs{overflow-x:visible;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.tabs:has(button:nth-child(5)){grid-template-columns:repeat(5,minmax(0,1fr))}.tabs button{white-space:normal;flex-direction:column;gap:4px;text-align:center;padding:9px 4px}.tabs button span{overflow-wrap:anywhere}.adminPanel .between{flex-wrap:wrap}@media(max-width:420px){.tabs button{font-size:11px;padding:8px 2px}.tabs button svg{width:17px;height:17px}.logo{width:47px;height:47px}.topbar h1{font-size:21px}.topbar small{font-size:10px}}
+/* v4: narrow screens, accessible cards, sorting, promotions and feedback */
+select{font:inherit;width:100%;padding:12px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;color:#19263a}
+.filterBar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.filterBar label{display:block;color:#53657e;font-size:13px;font-weight:600}
+.filterBar input,.filterBar select{margin-top:7px}
+.addressActions{display:flex;flex-wrap:wrap;gap:9px}
+.loadingComparison{padding:28px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;background:#eef6ff;border:1px solid #cdddff;border-radius:18px;margin:15px 0;color:#25579e}
+.loadingSpinner{border:4px solid #c9defc;border-top-color:#2364d2;border-radius:50%;width:38px;height:38px;animation:loadingSpin .75s linear infinite}
+@keyframes loadingSpin{to{transform:rotate(360deg)}}
+.loadingComparison small{color:#59749c}
+.promoCard{border:1px solid #e2ebf7;border-radius:14px;padding:15px;margin:10px 0;background:#fff;overflow-wrap:anywhere}
+.productResult{display:flex!important;flex-direction:row!important;align-items:center;gap:9px;flex:1;min-width:0}
+.productResult span{min-width:0;text-align:right;flex:1}.productResult b{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.productResult img{width:43px;height:43px;border-radius:8px;object-fit:contain;background:#fff;flex-shrink:0}
+.mapLink{display:inline-flex;gap:5px;align-items:center;color:#176a45;font-size:13px;margin:10px 12px 0 0}
+.tabs{grid-template-columns:repeat(5,minmax(0,1fr))}.tabs:has(button:nth-child(6)){grid-template-columns:repeat(6,minmax(0,1fr))}
+.darkTheme select{background:#15243a;color:#fff;border-color:#35445b}.darkTheme .promoCard{background:#1b293e;border-color:#35445b}.darkTheme .loadingComparison{background:#223853;color:#d5eaff;border-color:#375272}
+@media(max-width:650px){.filterBar{grid-template-columns:1fr}.addressActions{width:100%;display:grid;grid-template-columns:1fr 1fr}.addressActions button{font-size:12px;padding:11px 5px;line-height:1.4}.tabs button{font-size:10px;padding:7px 1px}.tabs button svg{width:17px;height:17px}.mapLink{margin-right:0}}
