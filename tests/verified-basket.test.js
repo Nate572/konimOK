@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assembleVerifiedStores,currentPrice,sameStore,mergeSourceRows} from '../lib/verified-basket.js';
+import {assembleVerifiedStores,currentPrice,sameStore,mergeSourceRows,storesFromMarketRows,priceDiagnostics} from '../lib/verified-basket.js';
 const now=new Date('2026-11-23T18:00:00Z');
 const stores=[{chain:'ramilevi',store_id:'12',store_name:'מרכז',city:'חיפה'},{chain:'ramilevi',store_id:'13',store_name:'צפון',city:'חיפה'}];
 const items=[{item_code:'7290001',quantity:2,name:'חלב'},{item_code:'7290002',quantity:1,name:'נייר טואלט'},{item_code:'7290003',quantity:1,name:'שמפו'}];
@@ -30,4 +30,18 @@ test('prefer official value over competing secondary quote, not lowest unverifie
 });
 test('provider parser reads nested results',()=>{
  assert.equal(mergeSourceRows([{data:{data:{results:[R('12','7290001',7)]}},source:'x'}]).length,1);
+});
+
+test('market row list drives store identities instead of basket-summary guesses',()=>{
+ const source=[{row:{chain:'cerberus:ramilevi',chain_name:'רמי לוי',store_id:'12',store_name:'חיפה',city:'חיפה',item_code:'7290001',item_price:7},source:'OVER',priority:1}];
+ const branches=storesFromMarketRows(source);
+ assert.equal(branches.length,1);
+ assert.equal(branches[0].chain,'cerberus:ramilevi');
+ const compared=assembleVerifiedStores(branches,[{item_code:'7290001',quantity:1,name:'חלב'}],source,{now,allowStaleDays:7});
+ assert.equal(compared[0].price,7);
+ assert.equal(priceDiagnostics([{item_code:'7290001'}],source,branches)[0].matchedBranches,1);
+});
+test('duplicate market rows do not create duplicate branches',()=>{
+ const one={row:{chain:'a',store_id:'9',item_code:'7290001',item_price:10},source:'x'};
+ assert.equal(storesFromMarketRows([one,one]).length,1);
 });
